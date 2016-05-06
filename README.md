@@ -1,9 +1,10 @@
 # IIS
 ##IIS powershell module
 
-Powershell cmdlets that to help with IIS. 
+Powershell cmdlets that to help with IIS, links to helpful webpages, and notes to help remind myself an others.
 
-* **Get-WebAppPool**  ----- Retrieves an object the WebAppPools on the IIS Server   
+Retrieve a list of Application Pools
+          Get-ChildItem IIS:\AppPools
 
 ### Installation
 
