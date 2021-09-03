@@ -1,0 +1,47 @@
+# ----- run only on PR Merge
+# https://brennerm.github.io/posts/trigger-github-actions-on-pr-close.html
+
+name: newrelease
+
+on:
+
+  pull_request:
+    types: [ closed ]
+    branches:
+      - '**'
+      
+  workflow_dispatch:
+
+jobs:
+  tagmain:
+    name: tag main branch 
+    if: github.base_ref == 'main' && github.event.pull_request.merged == true
+    runs-on: ubuntu-latest
+    steps:
+      # - name: Check out repository code
+      #   uses: actions/checkout@v2        
+        
+      # - name: GetRepoVersion
+      #   id: GetRepoVer
+      #   uses: ./
+        
+      # - name: tag
+      #   run: |
+      #     git config --global user.name 'github actions'      
+      #     git config --global user.email 'actions@github.com'
+      #     git tag -a v${{ steps.GetRepoVer.outputs.version }} -m "v${{ steps.GetRepoVer.outputs.version }}"
+        
+      # - name: pushtag
+      #   run: |
+      #     git config --global user.name 'github actions'      
+      #     git config --global user.email 'actions@github.com'
+      #     git push origin v${{ steps.GetRepoVer.outputs.version }}
+    
+  notmainbranch:
+    name:  not the main branch do not tag
+    if: github.base_ref != 'main' && github.event.pull_request.merged == true
+    runs-on: ubuntu-latest
+    steps:
+      - name: not main
+        run: echo "Tagging will only occur on the main branch"
+  

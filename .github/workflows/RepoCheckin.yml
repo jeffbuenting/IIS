@@ -1,0 +1,109 @@
+name: RepoCheckin
+
+on:
+  push:
+    branches:
+      - '**'
+      - '!dev'
+      - '!main'
+      
+  pull_request:
+    branches:
+      - '**'
+
+  workflow_dispatch:
+
+jobs:
+  unittest:
+    name: runs unit tests and updates the version if successfull
+    # ----- skip job if 'skip ci' in commit and if it is the main branch
+    if: "!contains(github.event.commits[0].message, '[skip ci]')"
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v2
+
+      # - name: Pester Tests
+      #   shell: pwsh
+      #   run: Invoke-Pester -Passthru | Export-CliXml -Path Unit.Tests.xml
+
+      # - name: Upload test results
+      #   uses: actions/upload-artifact@v2
+      #   with:
+      #     name: ubuntu-Unit-Tests
+      #     path: Unit.Tests.xml  
+
+    
+
+  UpdateModuleVersion:
+    name: Updates version and returns it
+    needs: unittest
+    if: success() && github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository code
+        uses: actions/checkout@v2  
+
+      # - name: GetVer PS
+      #   id: GetVer
+      #   shell: pwsh
+      #   run: |
+      #     $ModuleManifest = Get-Content "$($env:GITHUB_REPOSITORY.tolower().split('/')[1]).psd1"
+      #     $Ver = ($ModuleManifest | Select-String -Pattern "ModuleVersion = '(.*)'").matches.groups[1].value
+      #     Write-Output "::set-output name=version::$Ver"
+      #     Write-Output "::set-output name=versiontype::modulemanifest"
+
+      # - name: IncreaseVersion
+      #   id: IncreaseVer
+      #   shell: bash
+      #   run: |
+      #       CurVer=${{ steps.GetVer.outputs.version }}
+      #       IFS='.'
+      #       read -a SplitVer <<<"$CurVer"
+      #       Major=$((SplitVer[0]))
+      #       Minor=$((SplitVer[1]))
+      #       Build="$((SplitVer[2] + 1))"
+      #       NewVer="$Major.$Minor.$Build"
+      #       unset IFS
+      #       echo "::set-output name=version::$NewVer"
+         
+      # - name: Show Version
+      #   run: |
+      #     echo "NewVer = ${{ steps.IncreaseVer.outputs.version }}"
+
+      # - name: UpdateVersion
+      #   shell: pwsh
+      #   run: |
+      #     Update-ModuleManifest -Path ".\$($env:GITHUB_REPOSITORY.tolower().split('/')[1]).psd1" -ModuleVersion ${{steps.increaseVer.outputs.version}}           
+
+      # - name: UpdateReadmeVersionBadge
+      #   uses: jeffbuenting/UpdateCustomBadge@jeffbuenting-patch-1
+      #   with:
+      #     filename: 'README.md'
+      #     label: 'Version'
+      #     message: ${{ steps.IncreaseVer.outputs.version }}
+          
+      # - name: Commit
+      #   if: ${{ success() }}
+      #   run: |
+      #     git status
+      #     git config --global user.name 'github actions'      
+      #     git config --global user.email 'actions@github.com'
+      #     git ls-files --others --exclude-standard
+      #     git commit -am "skip ci - Commit Updated Version Files in Repo to: ${{steps.IncreaseVer.outputs.version}}"
+      #     git push
+
+  # FailedPRPesterTest:
+  #   name: Close PR after failed tests
+  #   needs: unittest
+  #   if: failure() && github.event_name != 'pull_request'
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - name: PR info
+  #       run: echo "PR number = ${{ github.event.number }}"
+    
+  #     - name: Close Pull
+  #       uses: peter-evans/close-pull@v1
+  #       with:
+  #         pull-request-number: github.event.number
+  #         comment: Tests failed. Auto-closing pull request
+  #         delete-branch: false
